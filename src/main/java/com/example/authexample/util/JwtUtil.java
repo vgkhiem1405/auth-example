@@ -3,20 +3,27 @@ package com.example.authexample.util;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.security.Keys;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
+import javax.crypto.SecretKey;
+import javax.swing.*;
+import java.security.Key;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
+import java.util.logging.LogRecord;
+import java.util.logging.Logger;
 
 @Service
 public class JwtUtil {
-    private static final String SECRET_KEY = "secret";
+    //    private static final Logger logger = Logger.getLogger("util");
+    private static final SecretKey key = Keys.secretKeyFor(SignatureAlgorithm.HS256); //or HS384 or HS512;
 
     private Claims extractAllClaims(String token){
-        return Jwts.parser().setSigningKey(SECRET_KEY).parseClaimsJws(token).getBody();
+        return Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token).getBody();
     }
     public <T> T extractClaim(String token, Function<Claims, T> claimsResolver){
         final Claims claims = extractAllClaims(token);
@@ -40,13 +47,14 @@ public class JwtUtil {
                 .setSubject(subject)
                 .setIssuedAt(new Date(System.currentTimeMillis()))
                 .setExpiration(new Date(System.currentTimeMillis() + 1000 *60*60*10 ))
-                .signWith(SignatureAlgorithm.HS256, SECRET_KEY).compact();
+                .signWith(key).compact();
     }
 
     public Boolean validateToken(String token, UserDetails userDetails){
         final String userName = extractUsername(token);
-        return userName.equals(userDetails.getUsername()) && isTokenExpired(token);
+        return userName.equals(userDetails.getUsername()) && !isTokenExpired(token);
     }
+
     public String generateToken(UserDetails userDetails){
         Map<String, Object> claims = new HashMap<>();
         return createToken(claims, userDetails.getUsername());

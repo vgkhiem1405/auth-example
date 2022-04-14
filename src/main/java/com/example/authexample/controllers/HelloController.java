@@ -36,14 +36,14 @@ public class HelloController {
     public ResponseEntity createAuthenticationToken(@RequestBody AuthenticationRequest authenticationRequest) throws Exception{
         try {
         authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(authenticationRequest.getUserName(), authenticationRequest.getPassword())
+                new UsernamePasswordAuthenticationToken(authenticationRequest.getUsername(), authenticationRequest.getPassword())
         );
 
         }catch (AuthenticationException e){
             throw new Exception("Incorrect username or password", e);
         }
 
-        final UserDetails userDetails = myUserDetailsService.loadUserByUsername(authenticationRequest.getUserName());
+        final UserDetails userDetails = myUserDetailsService.loadUserByUsername(authenticationRequest.getUsername());
         final String jwt = jwtUtil.generateToken(userDetails);
 
         return ResponseEntity.status(HttpStatus.OK).body(new AuthenticationResponse(jwt));
